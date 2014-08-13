@@ -3,7 +3,7 @@ pg-migrator
 
 The complete and easy to use command-line migration tool for [PostgreSQL](http://www.postgresql.org/).
 
-[![Build Status](https://travis-ci.org/leventkaragol/pg-migrator.png?branch=master)](https://travis-ci.org/leventkaragol/pg-migrator) [![Code Climate](https://codeclimate.com/github/leventkaragol/pg-migrator.png)](https://codeclimate.com/github/leventkaragol/pg-migrator)
+[![Build Status](https://travis-ci.org/Aphel-Cloud-Solutions/pg-migrator.png?branch=master)](https://travis-ci.org/Aphel-Cloud-Solutions/pg-migrator) [![Code Climate](https://codeclimate.com/github/Aphel-Cloud-Solutions/pg-migrator.png)](https://codeclimate.com/github/Aphel-Cloud-Solutions/pg-migrator)
 
 ## Features
 
@@ -69,7 +69,7 @@ For backward migration, you must also have files like "2-1.sql" and go on like "
 
 ## Step by Step Example
 
-Let's go step by step from the scratch. You can find all migration scripts we will use during this example in the ["examples"](https://github.com/leventkaragol/pg-migrator/tree/master/examples/) folder on Github.
+Let's go step by step from the scratch. You can find all migration scripts we will use during this example in the ["examples"](https://github.com/Aphel-Cloud-Solutions/pg-migrator/tree/master/examples/) folder on Github.
 
 As a first step, we need a database. Let's create a new one with "testdb" name. At the moment, there is no table in it.
 
