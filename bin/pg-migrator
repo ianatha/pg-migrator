@@ -5,15 +5,14 @@
 var fs = require("fs");
 var path = require("path");
 var colors = require("colors");
-var pg = require("pg");
-var _ = require("underscore");
+var Pgb = require("pg-bluebird");
+
+GLOBAL._ = require("underscore");
+GLOBAL.promise = require("bluebird");
+
 var ValidationService = require("../lib/application/service/validation-service");
-var MigratiorService = require("../lib/application/service/migrator-service");
-var ScriptService = require("../lib/domain/service/script-service");
-var VersionService = require("../lib/domain/service/version-service");
-var ScriptRepository = require("../lib/domain/repository/script-repository");
-var VersionRepository = require("../lib/domain/repository/version-repository");
 var messages = require("../lib/infrastructure/messages");
+var persisterProvider = new Pgb();
 
 colors.setTheme({
     verbose: 'cyan',
@@ -27,68 +26,81 @@ colors.setTheme({
 var args = process.argv.slice(2);
 
 // Validation for args
-new ValidationService(messages).validate(args, function (connectionString, targetVersion) {
+var isValid = new ValidationService(messages).validate(args);
 
-    var persister = new pg.Client(connectionString);
+if (!isValid) {
+    process.exit(1);
+}
 
-    // Connecting to PostgreSQL
-    persister.connect(function (err) {
+var connectionString = args[0];
+var targetVersion = 0;
 
-        if (err) {
-            // Could not connect to PostgreSQL
-            console.error((messages.CONNECTION_ERROR + err).error);
+// if targetVersion stays 0 means that, target version does not provided by user
+// so it will be obtained from script files (the biggest target version number in all files)
+if (args.length > 1) {
 
-            process.exit(1);
-        }
+    targetVersion = args[1];
+}
+
+var connection, currentPersister, currentVersion;
+
+// Connecting to PostgreSQL
+persisterProvider.connect(connectionString)
+    .then(function (persister) {
+
+        connection = persister;
+        currentPersister = persister.client;
 
         // Starting transaction
-        persister.query("BEGIN", function (err) {
+        return currentPersister.query("BEGIN TRANSACTION");
+    })
+    .then(function () {
 
-            if (err) {
-                // Transaction could not be started
-                console.log(err);
+        return getMigrationService(currentPersister).migrate(".", targetVersion);
+    })
+    .then(function (curVer) {
 
-                process.exit(1);
-            }
+        currentVersion = curVer;
 
-            // Service definition with dependency injection
-            var migratiorService = new MigratiorService(
-                new ScriptService(new ScriptRepository(fs, persister), path),
-                new VersionService(new VersionRepository(persister), messages),
-                messages,
-                _);
+        // Migration has been completed successfully, committing the transaction
+        return currentPersister.query("COMMIT");
+    })
+    .then(function () {
 
-            migratiorService.migrate(".", targetVersion, function (currentVersion) {
+        connection.done();
 
-                // Migration has been completed successfully, committing the transaction
-                persister.query('COMMIT', function () {
+        console.log("--------------------------------------------------".grey);
+        console.log((messages.MIGRATION_COMPLETED + currentVersion).info);
 
-                    persister.end();
+        process.exit(0);
+    })
+    .catch(function (error) {
 
-                    console.log("--------------------------------------------------".grey);
-                    console.log((messages.MIGRATION_COMPLETED + currentVersion).info);
+        // Migration failed
 
-                    process.exit(0);
-                });
+        if (error) {
+            console.error((messages.MIGRATION_ERROR + error).error);
+        }
 
-            }, function (err) {
+        if (connection) {
+            connection.done();
+        }
 
-                // Migration failed, rolling back the transaction
-                persister.query('ROLLBACK', function () {
-
-                    persister.end();
-
-                    if (err) {
-                        console.log(err);
-                    }
-
-                    process.exit(1);
-                });
-            });
-        });
+        process.exit(1);
     });
 
-}, function () {
-    // Validation error
-    process.exit(1);
-});
+var getMigrationService = function (persister) {
+
+    var MigratiorService = require("../lib/application/service/migrator-service");
+    var ScriptService = require("../lib/domain/service/script-service");
+    var VersionService = require("../lib/domain/service/version-service");
+    var ScriptRepository = require("../lib/domain/repository/script-repository");
+    var VersionRepository = require("../lib/domain/repository/version-repository");
+
+
+    // Service definition with dependency injection
+    return new MigratiorService(
+        new ScriptService(new ScriptRepository(fs, persister), path),
+        new VersionService(new VersionRepository(persister), messages),
+        messages);
+};
