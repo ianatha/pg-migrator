@@ -25,9 +25,9 @@
     },
     "dependencies": {
         "bluebird": "2.x",
-        "pg-bluebird": "1.x",
-        "underscore": "1.x",
-        "colors": "1.x"
+        "colors": "^1.4.0",
+        "pg-bluebird": "^1.0.8",
+        "underscore": "1.x"
     },
     "devDependencies": {
         "jasmine-node": "1.x"
