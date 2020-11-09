@@ -87,7 +87,7 @@ export default class MigratorService {
                 return currentVersion;
             } else {
                 // Recursive call until reach to target version
-                this.executeScript(direction, fileList, currentVersion, targetVersion);
+                await this.executeScript(direction, fileList, currentVersion, targetVersion);
                 return targetVersion;
             }
         }
