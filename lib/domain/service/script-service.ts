@@ -1,20 +1,34 @@
+interface FileDecl {
+    baseVersion: string,
+    targetVersion: string,
+    path: string
+}
+
 export default class ScriptService {
-    private _scriptRepository: any;
+    private _fs: any;
     private _path: any;
 
-    constructor(scriptRepository: any, path: any) {
-        this._scriptRepository = scriptRepository;
+    constructor(fs: any, path: any) {
+        this._fs = fs;
         this._path = path;
     }
 
-    get(path: any): any {
-        return this._scriptRepository.get(path);
+    get(path: string): string {
+        return this._fs.readFileSync(path, "utf8");
     }
 
-    getList(currentPath: string): any {
-        var sqlFiles: any[] = [];
+    _getList(path: string) {
+        return this._fs.readdirSync(path);
+    }
 
-        var files = this._scriptRepository.getList(currentPath);
+    _getStat(path: string) {
+        return this._fs.statSync(path)
+    }
+
+    getList(currentPath: string): FileDecl[] {
+        var sqlFiles: FileDecl[] = [];
+
+        var files = this._getList(currentPath);
 
         // Looking for all files in the path directory and all sub directories recursively
         for (var i in files) {
@@ -24,11 +38,11 @@ export default class ScriptService {
 
             var fullPath = currentPath + '/' + files[i];
 
-            var stats = this._scriptRepository.getStat(fullPath);
+            var stats = this._getStat(fullPath);
 
             if (stats.isDirectory()) {
 
-                sqlFiles = sqlFiles.concat(this.getList(fullPath));
+                sqlFiles = sqlFiles.concat(this._getList(fullPath));
 
             } else if (stats.isFile()) {
 
@@ -73,10 +87,5 @@ export default class ScriptService {
         }
 
         return sqlFiles;
-    }
-
-    execute(query: string): any {
-        // Execute migration script
-        return this._scriptRepository.execute(query);
     }
 }

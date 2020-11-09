@@ -6,22 +6,21 @@ const Pgb = require("pg-bluebird");
 const _ = require("underscore");
 const promise = require("bluebird");
 
-var ValidationService = require("./service/validation-service");
+var validateArgs = require("./service/validateArgs");
 var messages = require("../infrastructure/messages");
 var persisterProvider = new Pgb();
 
 import MigratorService from "./service/migrator-service";
+import ScriptService from "../domain/service/script-service";
 
-var getMigrationService = function (persister: any): MigratorService {
-    var ScriptService = require("../domain/service/script-service");
-    var VersionService = require("../domain/service/version-service");
-    var ScriptRepository = require("../domain/repository/script-repository");
-    var VersionRepository = require("../domain/repository/version-repository");
+var getMigrationService = function (scriptService: any, persister: any): MigratorService {
+    var VersionService = require("../domain/service/version-service").default;
+    var VersionRepository = require("../domain/repository/version-repository").default;
 
 
     // Service definition with dependency injection
     return new MigratorService(
-        new ScriptService(new ScriptRepository(fs, persister), path),
+        scriptService,
         new VersionService(new VersionRepository(persister), messages),
         messages);
 };
@@ -39,7 +38,8 @@ async function run(argv: any): Promise<void> {
     var args = argv.slice(2);
 
 // Validation for args
-    var isValid = new ValidationService(messages).validate(args);
+    var isValid = validateArgs(messages, args);
+    const scriptService = new ScriptService(fs, path)
 
     if (!isValid) {
         process.exit(1);
@@ -64,7 +64,8 @@ async function run(argv: any): Promise<void> {
         currentPersister = persister.client;
 
         await currentPersister.query("BEGIN TRANSACTION");
-        const curVer = await getMigrationService(currentPersister).migrate(".", targetVersion);
+        const fileList = scriptService.getList(".");
+        const curVer = await getMigrationService(scriptService, currentPersister).migrate(fileList, targetVersion, scriptService);
 
         currentVersion = curVer;
 

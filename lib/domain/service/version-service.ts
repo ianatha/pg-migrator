@@ -1,3 +1,4 @@
+const _ = require('underscore');
 import VersionRepository from '../repository/version-repository';
 
 export default class VersionService {
@@ -7,6 +8,29 @@ export default class VersionService {
     constructor(versionRepository: VersionRepository, messages: any) {
         this._versionRepository = versionRepository;
         this._messages = messages;
+    }
+
+    async resolveUserTargetVersion(currentVersion: number, fileList: any[], targetVersion: number|string): Promise<string|number> {
+        if (targetVersion == 0) {
+            // User didn't specify target version
+            // Looking for the file that has the biggest target version number
+            return _.max(fileList, function (item: any) {
+                return item.targetVersion;
+            }).targetVersion;
+        } else if (targetVersion == "+1") {
+            // One step forward request
+            return currentVersion + 1;
+        } else if (targetVersion == -1) {
+            // One step roll back request
+            if (currentVersion == 1) {
+                // DB in the initial state, can't go back no more
+                console.log(this._messages.NO_MORE_ROLLBACK.error);
+                throw new Error();
+            }
+            return currentVersion - 1;
+        } else {
+            return targetVersion;
+        }
     }
 
     async get(): Promise<number> {

@@ -1,5 +1,7 @@
+import ScriptService from "../../domain/service/script-service";
+
 const _ = require('underscore');
-const colors = require('colors')
+const colors = require("colors");
 
 export default class MigratorService {
     private _scriptService: any;
@@ -12,13 +14,9 @@ export default class MigratorService {
         this._messages = messages;
     }
 
-    async migrate(currentPath: string, targetVersion: any): Promise<number> {
-        var scriptService = this._scriptService;
+    async migrate(fileList: any[], userTargetVersion: string|number, scriptService: ScriptService): Promise<number> {
         var versionService = this._versionService;
         var messages = this._messages;
-
-        // Getting valid migration script files ("x-y.sql")
-        var fileList = scriptService.getList(currentPath);
 
         if (fileList.length == 0) {
             // There is no migration script file in current folder and subfolders
@@ -28,25 +26,7 @@ export default class MigratorService {
         } else {
             // Getting current db version
             const currentVersion = await versionService.get()
-
-            if (targetVersion == 0) {
-                // User didn't specify target version
-                // Looking for the file that has the biggest target version number
-                targetVersion = _.max(fileList, function (item: any) {
-                    return item.targetVersion;
-                }).targetVersion;
-            } else if (targetVersion == "+1") {
-                // One step forward request
-                targetVersion = currentVersion + 1;
-            } else if (targetVersion == -1) {
-                // One step roll back request
-                if (currentVersion == 1) {
-                    // DB in the initial state, can't go back no more
-                    console.log(messages.NO_MORE_ROLLBACK.error);
-                    throw new Error();
-                }
-                targetVersion = currentVersion - 1;
-            }
+            const targetVersion = await versionService.resolveUserTargetVersion(currentVersion, fileList, userTargetVersion)
 
             console.log((messages.CURRENT_VERSION + currentVersion).verbose);
             console.log((messages.TARGET_VERSION + targetVersion).verbose);
