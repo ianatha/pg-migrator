@@ -1,15 +1,18 @@
 export default class ScriptService {
-    constructor(scriptRepository, path) {
+    private _scriptRepository: any;
+    private _path: any;
+
+    constructor(scriptRepository: any, path: any) {
         this._scriptRepository = scriptRepository;
         this._path = path;
     }
 
-    get(path) {
+    get(path: any): any {
         return this._scriptRepository.get(path);
     }
 
-    getList(currentPath) {
-        var sqlFiles = [];
+    getList(currentPath: string): any {
+        var sqlFiles: any[] = [];
 
         var files = this._scriptRepository.getList(currentPath);
 
@@ -72,7 +75,7 @@ export default class ScriptService {
         return sqlFiles;
     }
 
-    execute(query) {
+    execute(query: string): any {
         // Execute migration script
         return this._scriptRepository.execute(query);
     }

@@ -1,9 +1,11 @@
 export default class ValidationService {
-    constructor(messages) {
+    private _messages: any;
+
+    constructor(messages: any) {
         this._messages = messages;
     }
 
-    validate(args) {
+    validate(args: any): boolean {
         if (args.length == 0) {
             // There is no argument provided but connection string argument is mandatory
             console.log(this._messages.CONNECTION_STRING_MUST_BE_PROVIDED.error);

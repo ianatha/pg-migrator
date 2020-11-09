@@ -10,8 +10,9 @@ var ValidationService = require("./service/validation-service");
 var messages = require("../infrastructure/messages");
 var persisterProvider = new Pgb();
 
-var getMigrationService = function (persister) {
-    var MigratiorService = require("./service/migrator-service");
+import MigratorService from "./service/migrator-service";
+
+var getMigrationService = function (persister: any): MigratorService {
     var ScriptService = require("../domain/service/script-service");
     var VersionService = require("../domain/service/version-service");
     var ScriptRepository = require("../domain/repository/script-repository");
@@ -19,13 +20,13 @@ var getMigrationService = function (persister) {
 
 
     // Service definition with dependency injection
-    return new MigratiorService(
+    return new MigratorService(
         new ScriptService(new ScriptRepository(fs, persister), path),
         new VersionService(new VersionRepository(persister), messages),
         messages);
 };
 
-async function run(argv) {
+async function run(argv: any): Promise<void> {
     colors.setTheme({
         verbose: 'cyan',
         info: 'green',
@@ -71,15 +72,15 @@ async function run(argv) {
 
         connection.done();
 
-        console.log("--------------------------------------------------".grey);
-        console.log((messages.MIGRATION_COMPLETED + currentVersion).info);
+        console.log(colors.grey("--------------------------------------------------"));
+        console.log(colors.green(messages.MIGRATION_COMPLETED + currentVersion));
 
         process.exit(0);
     } catch (error) {
         // Migration failed
 
         if (error) {
-            console.error((messages.MIGRATION_ERROR + error).error);
+            console.error(colors.red(messages.MIGRATION_ERROR + error));
         }
 
         if (connection) {

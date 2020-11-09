@@ -1,15 +1,21 @@
+const _ = require('underscore');
+const colors = require('colors')
+
 export default class MigratorService {
-    constructor(scriptService, versionService, messages) {
+    private _scriptService: any;
+    private _versionService: any;
+    private _messages: any;
+
+    constructor(scriptService: any, versionService: any, messages: any) {
         this._scriptService = scriptService;
         this._versionService = versionService;
         this._messages = messages;
     }
 
-    async migrate(currentPath, targetVersion) {
+    async migrate(currentPath: string, targetVersion: any): Promise<number> {
         var scriptService = this._scriptService;
         var versionService = this._versionService;
         var messages = this._messages;
-        var that = this;
 
         // Getting valid migration script files ("x-y.sql")
         var fileList = scriptService.getList(currentPath);
@@ -26,7 +32,7 @@ export default class MigratorService {
             if (targetVersion == 0) {
                 // User didn't specify target version
                 // Looking for the file that has the biggest target version number
-                targetVersion = _.max(fileList, function (item) {
+                targetVersion = _.max(fileList, function (item: any) {
                     return item.targetVersion;
                 }).targetVersion;
             } else if (targetVersion == "+1") {
@@ -67,11 +73,9 @@ export default class MigratorService {
         }
     }
 
-    async executeScript(direction, fileList, currentVersion, targetVersion) {
+    async executeScript(direction: any, fileList: any, currentVersion: any, targetVersion: any): Promise<number> {
         var scriptService = this._scriptService;
         var messages = this._messages;
-        var executeScript = this._executeScript;
-        var that = this;
 
         // Calculate the version after migration step according to direction
         var nextVersion = currentVersion + direction;
@@ -81,7 +85,7 @@ export default class MigratorService {
 
         if (!file) {
             // Migration file is not found. Probably some steps missing, stop migration
-            console.log((messages.FILE_NOT_FOUND + currentVersion + "-" + nextVersion + ".sql").error);
+            console.log(colors.red(messages.FILE_NOT_FOUND + currentVersion + "-" + nextVersion + ".sql"));
             throw new Error();
         } else {
             // Get migration step script file content
@@ -90,10 +94,10 @@ export default class MigratorService {
             // Execute migration step script file
             await scriptService.execute(fileContent);
 
-            console.log("--------------------------------------------------".grey);
-            console.log(fileContent.white);
-            console.log((currentVersion + "-" + nextVersion + ".sql executed").info);
-            console.log("--------------------------------------------------".grey);
+            console.log(colors.grey("--------------------------------------------------"));
+            console.log(colors.white(fileContent));
+            console.log(colors.green(currentVersion + "-" + nextVersion + ".sql executed"));
+            console.log(colors.grey("--------------------------------------------------"));
 
             // Update current version
             currentVersion += direction;
@@ -103,7 +107,7 @@ export default class MigratorService {
                 return currentVersion;
             } else {
                 // Recursive call until reach to target version
-                await executeScript.call(that, direction, fileList, currentVersion, targetVersion);
+                this.executeScript(direction, fileList, currentVersion, targetVersion);
                 return targetVersion;
             }
         }

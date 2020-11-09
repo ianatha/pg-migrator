@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 "use strict";
-const application = require("../lib/application/index");
+const application = require("../dist/application/index");
 
 application(process.argv)

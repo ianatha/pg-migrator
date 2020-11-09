@@ -1,10 +1,15 @@
+import VersionRepository from '../repository/version-repository';
+
 export default class VersionService {
-    constructor(versionRepository, messages) {
+    private _versionRepository: any;
+    private _messages: any;
+
+    constructor(versionRepository: VersionRepository, messages: any) {
         this._versionRepository = versionRepository;
         this._messages = messages;
     }
 
-    async get() {
+    async get(): Promise<number> {
         // check if "version" table exists in db
         try {
             const exists = await this._versionRepository.checkTable()
@@ -25,7 +30,7 @@ export default class VersionService {
         }
     }
 
-    async update(version) {
+    async update(version: number): Promise<number> {
         // Update current version
         return this._versionRepository.update(version);
     }
