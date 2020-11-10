@@ -1,5 +1,6 @@
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
+
 const colors = require("colors");
 const Pgb = require("pg-bluebird");
 
@@ -20,8 +21,8 @@ var getMigrationService = function (scriptService: any, persister: any): Migrato
 
     // Service definition with dependency injection
     return new MigratorService(
-        scriptService,
         new VersionService(new VersionRepository(persister), messages),
+        persister,
         messages);
 };
 
@@ -82,6 +83,7 @@ async function run(argv: any): Promise<void> {
 
         if (error) {
             console.error(colors.red(messages.MIGRATION_ERROR + error));
+            console.log(error)
         }
 
         if (connection) {

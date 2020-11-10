@@ -59,7 +59,7 @@ async function runScript(fileContent: string, _persister: any) {
 }
 
 export default class MigratorService {
-    private _versionService: any;
+    private _versionService: VersionService;
     private _messages: any;
     private _persister: any;
 
@@ -91,7 +91,7 @@ export default class MigratorService {
 
         if (currentVersion == targetVersion) {
             // DB is already migrated to the target version
-            console.log(colors.orange(messages.ALREADY_MIGRATED));
+            console.log(colors.green(messages.ALREADY_MIGRATED));
             return currentVersion;
         }
 
