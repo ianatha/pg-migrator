@@ -1,5 +1,5 @@
 const _ = require('underscore');
-import VersionRepository from '../repository/version-repository';
+import VersionRepository from './version-repository';
 
 export default class VersionService {
     private _versionRepository: any;

@@ -7,16 +7,16 @@ const Pgb = require("pg-bluebird");
 const _ = require("underscore");
 const promise = require("bluebird");
 
-var validateArgs = require("./service/validateArgs");
-var messages = require("../infrastructure/messages");
+var validateArgs = require("./validateArgs");
+var messages = require("./messages");
 var persisterProvider = new Pgb();
 
-import MigratorService from "./service/migrator-service";
-import ScriptService from "../domain/service/script-service";
+import MigratorService from "./migrator-service";
+import ScriptService from "./script-service";
 
 var getMigrationService = function (scriptService: any, persister: any): MigratorService {
-    var VersionService = require("../domain/service/version-service").default;
-    var VersionRepository = require("../domain/repository/version-repository").default;
+    var VersionService = require("./version-service").default;
+    var VersionRepository = require("./version-repository").default;
 
 
     // Service definition with dependency injection

@@ -5,8 +5,8 @@ const NO_TRANSACTION_BEGIN = '-- pg-migrator:without-transaction-begin';
 
 const NO_TRANSACTION_END = '-- pg-migrator:without-transaction-end';
 
-import VersionService from '../../domain/service/version-service';
-import ScriptService from '../../domain/service/script-service';
+import VersionService from './version-service';
+import ScriptService from './script-service';
 
 async function runScript(fileContent: string, _persister: any) {
     const lines = fileContent.split('\n');
