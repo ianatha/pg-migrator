@@ -87,7 +87,7 @@ export default class MigratorService {
         const targetVersion = await versionService.resolveUserTargetVersion(currentVersion, fileList, userTargetVersion)
 
         console.log(colors.yellow(messages.CURRENT_VERSION + currentVersion));
-        console.log(colors.yellow((messages.TARGET_VERSION + targetVersion));
+        console.log(colors.yellow((messages.TARGET_VERSION + targetVersion)));
 
         if (currentVersion == targetVersion) {
             // DB is already migrated to the target version
