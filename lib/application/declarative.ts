@@ -1,10 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 const colors = require("colors");
-const { Client } = require('pg');
-import pgStructure from 'pg-structure';
+// const { Client } = require('pg');
+// import pgStructure from 'pg-structure';
 
-const p = require('pg-query-parser');
+const pgStructure = require('pg-structure');
+
+// const p = require('pg-query-parser');
 
 interface Type {
     name: string;
@@ -58,11 +60,12 @@ function column_ddl(t: Type): string {
 }
 
 function table(schema: Schema, name: string): TableBuilder {
+    let columns: TableColumn[] = []
     let self: TableBuilder = {
         schema,
         name,
         _comment: undefined,
-        columns: [],
+        columns,
         comment(c: string): TableBuilder {
             self._comment = c
             return self
@@ -156,7 +159,7 @@ async function exporttables() {
     const db = await pgStructure({database: "prod", user: "postgres", password: "postgres"},
         {includeSchemas: ["public", "security", "static"]});
 
-    db.tables.forEach(e => {
+    db.tables.forEach((e: any) => {
         let r: STable = {
             name: e.schema.name +"."+e.name,
             comment: e.comment,
