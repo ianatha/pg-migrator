@@ -1,0 +1,28 @@
+name: Build Typescript
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.x
+    - run: npm install
+    - run: npm run build
+    - run: git add -f dist
+    - name: Commit report
+      run: |
+        git config --global user.name 'Automatic Build'
+        git config --global user.email 'ianatha@users.noreply.github.com'
+        git commit -am "Automated Typescript Build"
+        git push
