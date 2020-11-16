@@ -7,90 +7,60 @@ const Pgb = require("pg-bluebird");
 const _ = require("underscore");
 const promise = require("bluebird");
 
-var validateArgs = require("./validateArgs");
+var validateArgs = require("./validateArgs").default;
 var messages = require("./messages");
 var persisterProvider = new Pgb();
 
 import MigratorService from "./migrator-service";
 import ScriptService from "./script-service";
+var VersionService = require("./version-service").default;
+var VersionRepository = require("./version-repository").default;
 
-var getMigrationService = function (scriptService: any, persister: any): MigratorService {
-    var VersionService = require("./version-service").default;
-    var VersionRepository = require("./version-repository").default;
-
-
-    // Service definition with dependency injection
-    return new MigratorService(
-        new VersionService(new VersionRepository(persister), messages),
-        persister,
-        messages);
-};
+const sql_path = "/Users/iwa/goku/db/"
 
 async function run(argv: any): Promise<void> {
-    colors.setTheme({
-        verbose: 'cyan',
-        info: 'green',
-        warn: 'yellow',
-        error: 'red'
-    });
-
-// First argument : connectionString (mandatory)
-// Second argument : target version (optional)
+    // First argument : connectionString (mandatory)
+    // Second argument : target version (optional)
     var args = argv.slice(2);
 
 // Validation for args
-    var isValid = validateArgs(messages, args);
+    var {isValid, connectionString, targetVersion} = validateArgs(messages, argv.slice(2));
+
     const scriptService = new ScriptService(fs, path)
 
     if (!isValid) {
+        console.log("invalid args")
         process.exit(1);
     }
 
-    var connectionString = args[0];
-    var targetVersion = 0;
-
-    // if targetVersion stays 0 means that, target version does not provided by user
-    // so it will be obtained from script files (the biggest target version number in all files)
-    if (args.length > 1) {
-
-        targetVersion = args[1];
-    }
-
-    var connection, currentPersister, currentVersion;
+    var connection, currentPersister;
     try {
         // Connecting to PostgreSQL
-        const persister = await persisterProvider.connect(connectionString)
+        connection = await persisterProvider.connect(connectionString)
+        var persister = connection.client
+        // connection = persister;
+        // currentPersister = persister.client;
 
-        connection = persister;
-        currentPersister = persister.client;
 
-        await currentPersister.query("BEGIN TRANSACTION");
-        const fileList = scriptService.getList(".");
-        const curVer = await getMigrationService(scriptService, currentPersister).migrate(fileList, targetVersion, scriptService);
+        const fileList = scriptService.getList(sql_path);
 
-        currentVersion = curVer;
+        const migratorService = new MigratorService(
+            new VersionService(new VersionRepository(persister), messages),
+            persister,
+            messages);
 
-        await currentPersister.query("COMMIT");
-
-        connection.done();
+        const currentVersion = await migratorService.migrate(fileList, targetVersion, scriptService);
 
         console.log(colors.grey("--------------------------------------------------"));
         console.log(colors.green(messages.MIGRATION_COMPLETED + currentVersion));
-
-        process.exit(0);
-    } catch (error) {
+    } catch (err) {
         // Migration failed
-
-        if (error) {
-            console.error(colors.red(messages.MIGRATION_ERROR + error));
-            console.log(error)
-        }
-
+        console.error(colors.red(messages.MIGRATION_ERROR + err));
+        console.log(err)
+    } finally {
         if (connection) {
             connection.done();
         }
-
-        process.exit(1);
     }
 }
 

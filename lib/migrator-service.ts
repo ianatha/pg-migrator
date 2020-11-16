@@ -38,10 +38,10 @@ async function runScript(fileContent: string, _persister: any) {
             continue;
         }
 
-        console.log(block.no_transaction);
         const blockSql = block.items.join("\n")
         if (block.no_transaction) {
-            console.log("running no transaction")
+            console.log(colors.white("Running without transaction"))
+
             await _persister.query('COMMIT');
             for (var blockStmt of blockSql.split(';')) {
                 await _persister.query(blockStmt)
@@ -53,6 +53,7 @@ async function runScript(fileContent: string, _persister: any) {
             // await this._persister.query('BEGIN TRANSACTION;');
             // console.log(blockSql)
         } else {
+            console.log(colors.white("Running with transaction"))
             await _persister.query(blockSql);
         }
     }
@@ -106,7 +107,7 @@ export default class MigratorService {
 
         // Recursively call "executeScript" function until reach to target version
         const newVersion = await this.executeScripts(direction, fileList, currentVersion, targetVersion, scriptService)
-        console.log(newVersion)
+        console.log("New Version", newVersion);
         await versionService.update(newVersion);
 
         // await this._persister.query("COMMIT");
@@ -119,6 +120,8 @@ export default class MigratorService {
 
         // Calculate the version after migration step according to direction
         var currentVersion = startVersion;
+
+        await this._persister.query("BEGIN TRANSACTION");
 
         while (currentVersion != targetVersion) {
             var nextVersion = currentVersion + direction;
@@ -147,6 +150,8 @@ export default class MigratorService {
 
             currentVersion = nextVersion
         }
+
+        await this._persister.query("COMMIT");
 
         return currentVersion
     }
